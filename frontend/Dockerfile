@@ -6,12 +6,13 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-# Step 2: Serve the static files using Nginx
+# Step 2: Serve using Nginx
 FROM nginx:alpine
+
+# Copy custom config directly to overwrite default port
+RUN echo 'server { listen 8080; location / { root /usr/share/nginx/html; index index.html; try_files $uri $uri/ /index.html; } }' > /etc/nginx/conf.d/default.conf
+
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Expose port 8080 (Cloud Run default) and configure Nginx to listen to it
 EXPOSE 8080
-RUN sed -i 's/listen\.+80;/listen 8080;/g' /etc/nginx/conf.d/default.conf
-
 CMD ["nginx", "-g", "daemon off;"]
