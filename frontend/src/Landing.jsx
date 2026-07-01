@@ -76,7 +76,7 @@ export function AppPage({ onBack }) {
 
     setThinking(true);
     try {
-      const response = await fetch('https://deadline-backend-165865432967.europe-west1.run.app/api/task', {
+      const response = await fetch('https://deadline-app-backend-165865432967.europe-west1.run.app/api/task', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ task: text })
@@ -112,7 +112,7 @@ export function AppPage({ onBack }) {
 
   const handleClearMatrix = async () => {
     try {
-      await fetch('https://deadline-backend-165865432967.europe-west1.run.app/api/reschedule', { method: 'POST' });
+      await fetch('https://deadline-app-backend-165865432967.europe-west1.run.app/api/reschedule', { method: 'POST' });
       setBlocks([]);
       setTaskList([]);
     } catch (err) {
