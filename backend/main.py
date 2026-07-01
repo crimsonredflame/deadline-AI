@@ -9,7 +9,7 @@ import os
 
 app = FastAPI()
 
-# 👑 CORS Setup
+# CORS Setup
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  
@@ -23,16 +23,15 @@ active_tasks_db = []
 class TaskRequest(BaseModel):
     task: str
 
-# 👑 FIX: Environment variables ko clear target dena taaki Google SDK mix-up na kare
-GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
+# 👑 FIX: Read from a uniquely named environment variable to completely stop the SDK from doing automatic OAuth lookups
+MY_CUSTOM_GEMINI_KEY = os.environ.get("CUSTOM_GEMINI_API_KEY")
 
-# Agar environment variable milta hai, toh strictly standard client config use karenge
-if GEMINI_KEY:
-    # `http_options` bypass karta hai Google ke internal automatic OAuth service account token mixup ko
-    client = genai.Client(api_key=GEMINI_KEY, http_options={'api_version': 'v1beta'})
+if MY_CUSTOM_GEMINI_KEY:
+    # Explicitly set the key and use the direct v1beta API endpoint bypass
+    client = genai.Client(api_key=MY_CUSTOM_GEMINI_KEY, http_options={'api_version': 'v1beta'})
 else:
-    # Fallback default backend runtime setup
-    client = genai.Client()
+    # Fallback to standard check if not set yet
+    client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
 
 @app.post("/api/task")
 async def plan_task(request: TaskRequest):
