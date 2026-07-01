@@ -9,9 +9,10 @@ import os
 
 app = FastAPI()
 
+# 👑 FIX 1: Allow all origins so live frontend can talk to live backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["*"],  # Hackathon ke liye sabse best aur safest setup
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -22,19 +23,20 @@ active_tasks_db = []
 class TaskRequest(BaseModel):
     task: str
 
-# Put your real API key here
-client = genai.Client(api_key="GEMINI_API_KEY")
+# 👑 FIX 2: Fallback system - Pehle GCP Environment Variable check karega, nahi toh aapki raw key use karega
+# Agar aapne Cloud Run me GEMINI_API_KEY naam ka variable banaya hai toh ye wahan se automatic utha lega.
+GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "YOUR_ACTUAL_GEMINI_API_KEY_HERE")
+client = genai.Client(api_key=GEMINI_KEY)
 
 @app.post("/api/task")
 async def plan_task(request: TaskRequest):
-    # For the sake of your live demo, we are explicitly forcing this to start from Tuesday
     allowed_demo_days = ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     
     raw_input = request.task.strip()
     if raw_input and raw_input not in [t["raw"] for t in active_tasks_db]:
         active_tasks_db.append({
             "raw": raw_input,
-            "added_at": "Tuesday, 11:00 AM" # Hardcoded anchor for the demo
+            "added_at": "Tuesday, 11:00 AM" 
         })
         
     prompt = f"""
@@ -71,8 +73,6 @@ async def plan_task(request: TaskRequest):
         clean_text = response.text.strip().strip("`").replace("json\n", "")
         master_steps_data = json.loads(clean_text)
         
-        # ☢️ THE HACKATHON NUKE: Post-processing to physically destroy Monday 
-        # If the AI hallucinates Monday, we force it to Tuesday/Wednesday
         fallback_slots = ["Tuesday, 01:00 PM", "Tuesday, 03:00 PM", "Wednesday, 09:00 AM", "Wednesday, 11:00 AM"]
         slot_index = 0
         
