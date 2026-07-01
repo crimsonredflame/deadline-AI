@@ -1,10 +1,10 @@
-# 🚀 Deadline AI: Autonomous Task Scheduler & Core Engine
+#  Deadline AI: Autonomous Task Scheduler & Core Engine
 
 An intelligent, cloud-native automation tool built for hackathons that transforms unstructured natural language commands (e.g., *"submit my ML assignment by Friday"*) into structured, conflict-free timeline slots directly synchronized with the **Google Calendar API**.
 
 ---
 
-## 🌐 Live Deployments
+##  Live Deployments
 * **Production Frontend UI:** [https://deadline-app-165865432967.europe-west1.run.app](https://deadline-app-165865432967.europe-west1.run.app)
 * **Production Backend API:** `https://deadline-backend-xxxx.europe-west1.run.app` *(Note: Update this with your final backend Cloud Run URL once active)*
 
