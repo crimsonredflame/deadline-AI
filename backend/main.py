@@ -9,10 +9,10 @@ import os
 
 app = FastAPI()
 
-# 👑 FIX 1: Allow all origins so live frontend can talk to live backend
+# 👑 CORS Setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Hackathon ke liye sabse best aur safest setup
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -23,10 +23,16 @@ active_tasks_db = []
 class TaskRequest(BaseModel):
     task: str
 
-# 👑 FIX 2: Fallback system - Pehle GCP Environment Variable check karega, nahi toh aapki raw key use karega
-# Agar aapne Cloud Run me GEMINI_API_KEY naam ka variable banaya hai toh ye wahan se automatic utha lega.
-GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "YOUR_ACTUAL_GEMINI_API_KEY_HERE")
-client = genai.Client(api_key=GEMINI_KEY)
+# 👑 FIX: Environment variables ko clear target dena taaki Google SDK mix-up na kare
+GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
+
+# Agar environment variable milta hai, toh strictly standard client config use karenge
+if GEMINI_KEY:
+    # `http_options` bypass karta hai Google ke internal automatic OAuth service account token mixup ko
+    client = genai.Client(api_key=GEMINI_KEY, http_options={'api_version': 'v1beta'})
+else:
+    # Fallback default backend runtime setup
+    client = genai.Client()
 
 @app.post("/api/task")
 async def plan_task(request: TaskRequest):
@@ -86,7 +92,7 @@ async def plan_task(request: TaskRequest):
         
     except Exception as e:
         print(f"AI Error: {e}")
-        return {"steps": [{"label": "Matrix Error", "time": "0", "day": "Tuesday, 09:00 AM"}]}
+        return {"steps": [{"label": f"Matrix Error: {str(e)}", "time": "0", "day": "Tuesday, 09:00 AM"}]}
 
 @app.post("/api/reschedule")
 async def reschedule():
