@@ -22,7 +22,7 @@ class TaskRequest(BaseModel):
     task: str
 
 # Put your real API key here
-client = genai.Client(api_key="AQ.Ab8RN6KFRvl_H2EjTY12NiEXAAj_K0r2QtxrGsliVqE5-w5fNw")
+client = genai.Client(api_key="GEMINI_API_KEY")
 
 @app.post("/api/task")
 async def plan_task(request: TaskRequest):
