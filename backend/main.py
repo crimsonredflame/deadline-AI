@@ -3,8 +3,7 @@ from datetime import datetime
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from google import genai
-from google.genai import types
+import google.generativeai as genai  # 👑 Legacy SDK use kar rahe hain jo conflict nahi karta
 import os
 
 app = FastAPI()
@@ -23,16 +22,9 @@ active_tasks_db = []
 class TaskRequest(BaseModel):
     task: str
 
-# 👑 THE SECRET BYPASS HACK: 
-# Apni Gemini API key ko do hisso mein tod kar likho taaki GitHub detect na kare!
-# Example: Agar aapki key hai "AIzaSyAbc123xyz", toh use do parts me divide karke likho.
-PART_1 = "AIzaSyA..."  # <-- Apni key ka pehla aadha hissa yahan dalo
-PART_2 = "...xyz"      # <-- Apni key ka bacha hua hissa yahan dalo
-
-REAL_GEMINI_KEY = PART_1 + PART_2
-
-# Directly direct http_options ke sath client initialize karo bina variable check ke
-client = genai.Client(api_key=REAL_GEMINI_KEY, http_options={'api_version': 'v1beta'})
+# 👑 Cloud Run Dashboard se GEMINI_API_KEY automatic read hogi
+GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "")
+genai.configure(api_key=GEMINI_KEY)
 
 @app.post("/api/task")
 async def plan_task(request: TaskRequest):
@@ -67,13 +59,14 @@ async def plan_task(request: TaskRequest):
     """
     
     try:
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt,
-            config=types.GenerateContentConfig(
+        # Purane SDK ka model invocation syntax
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(
                 response_mime_type="application/json",
                 temperature=0.0,
-            ),
+            )
         )
         
         clean_text = response.text.strip().strip("`").replace("json\n", "")
